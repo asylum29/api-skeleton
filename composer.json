@@ -1,6 +1,8 @@
 {
+    "name": "asylum29/api-skeleton",
+    "version": "v1.1",
     "type": "project",
-    "license": "proprietary",
+    "license": "MIT",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
