@@ -5,6 +5,8 @@ namespace <?= $namespace ?>;
 use <?= $entity_full_class_name ?>;
 use <?= $repository_full_class_name ?>;
 use App\Exception\ApiException;
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -85,17 +87,25 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
             $param = $setter->getParameters()[0];
             $is_simple = strpos($param->getType()->getName(), '\\') === false;
             if ($is_simple) {
-                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                    . '($request->request->get(\'' . $param->getName()
-                    . '\'));' . $br;
+                if (strpos($param->getType()->getName(), 'DateTime') !== false) {
+                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '(' . $br.$t.$t.$t
+                        . 'DateTimeImmutable::createFromMutable(' . $br.$t.$t.$t.$t
+                        . 'new DateTime(' . '$request->request->get(\'' . $param->getName() . '\'))' . $br.$t.$t.$t
+                        . ')' . $br.$t.$t
+                        . ');' . $br;
+                } else {
+                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
+                        . '($request->request->get(\'' . $param->getName() . '\'));' . $br;
+                }
             } else {
-                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                    . '(' . $br.$t.$t.$t . '$this->getDoctrine()' . $br.$t.$t.$t.$t
-                    .'->getRepository(\''
-                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t.$t
+                echo $t.$t . '/** @var \\' . $param->getType()->getName() . ' $temp */' . $br.$t.$t
+                    . '$temp = $this->managerRegistry' . $br.$t.$t.$t
+                    . '->getRepository(\''
+                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t
                     . '->find('
-                    . '$request->request->get(\'' . $param->getName() . '_id\')'
-                    . ')' . $br.$t.$t . ');' . $br;
+                    . '$request->request->get(\'' . $param->getName() . '\')'
+                    . ')' . $br.$t.$t . ';' . $br;
+                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '($temp);' . $br;
             }
         }
 ?>
@@ -174,17 +184,25 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
             $param = $setter->getParameters()[0];
             $is_simple = strpos($param->getType()->getName(), '\\') === false;
             if ($is_simple) {
-                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                    . '($request->request->get(\'' . $param->getName()
-                    . '\'));' . $br;
+                if (strpos($param->getType()->getName(), 'DateTime') !== false) {
+                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '(' . $br.$t.$t.$t
+                        . 'DateTimeImmutable::createFromMutable(' . $br.$t.$t.$t.$t
+                        . 'new DateTime(' . '$request->request->get(\'' . $param->getName() . '\'))' . $br.$t.$t.$t
+                        . ')' . $br.$t.$t
+                        . ');' . $br;
+                } else {
+                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
+                        . '($request->request->get(\'' . $param->getName() . '\'));' . $br;
+                }
             } else {
-                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                    . '(' . $br.$t.$t.$t . '$this->getDoctrine()' . $br.$t.$t.$t.$t
-                    .'->getRepository(\''
-                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t.$t
+                echo $t.$t . '/** @var \\' . $param->getType()->getName() . ' $temp */' . $br.$t.$t
+                    . '$temp = $this->managerRegistry' . $br.$t.$t.$t
+                    . '->getRepository(\''
+                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t
                     . '->find('
-                    . '$request->request->get(\'' . $param->getName() . '_id\')'
-                    . ')' . $br.$t.$t . ');' . $br;
+                    . '$request->request->get(\'' . $param->getName() . '\')'
+                    . ')' . $br.$t.$t . ';' . $br;
+                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '($temp);' . $br;
             }
         }
 ?>
@@ -198,7 +216,7 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
                 'Location',
                 $this->generateUrl(
                     '<?= $route_name ?>_get',
-                    ['<?= $entity_identifier?>' => $<?= $entity_var_singular ?>->get<?= ucfirst($entity_identifier) ?>]
+                    ['<?= $entity_identifier?>' => $<?= $entity_var_singular ?>->get<?= ucfirst($entity_identifier) ?>()]
                 )
             );
 
@@ -244,17 +262,25 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
             echo $t.$t . 'if ($request->request->has(\''
                 . $param->getName() . '\')) {' . $br;
             if ($is_simple) {
-                echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                    . '($request->request->get(\'' . $param->getName()
-                    . '\'));' . $br;
+                if (strpos($param->getType()->getName(), 'DateTime') !== false) {
+                    echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '(' . $br.$t.$t.$t.$t
+                        . 'DateTimeImmutable::createFromMutable(' . $br.$t.$t.$t.$t.$t
+                        . 'new DateTime(' . '$request->request->get(\'' . $param->getName() . '\'))' . $br.$t.$t.$t.$t
+                        . ')' . $br.$t.$t.$t
+                        . ');' . $br;
+                } else {
+                    echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
+                        . '($request->request->get(\'' . $param->getName() . '\'));' . $br;
+                }
             } else {
-                echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                    . '(' . $br.$t.$t.$t.$t . '$this->getDoctrine()' . $br.$t.$t.$t.$t.$t
-                    .'->getRepository(\''
-                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t.$t.$t
+                echo $t.$t.$t . '/** @var \\' . $param->getType()->getName() . ' $temp */' . $br.$t.$t.$t
+                    . '$temp = $this->managerRegistry' . $br.$t.$t.$t.$t
+                    . '->getRepository(\''
+                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t.$t
                     . '->find('
-                    . '$request->request->get(\'' . $param->getName() . '_id\')'
-                    . ')' . $br.$t.$t.$t . ');' . $br;
+                    . '$request->request->get(\'' . $param->getName() . '\')'
+                    . ')' . $br.$t.$t.$t . ';' . $br;
+                echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '($temp);' . $br;
             }
             echo $t.$t . '}' . $br;
         }
