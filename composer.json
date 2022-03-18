@@ -1,6 +1,7 @@
 {
     "name": "asylum29/api-skeleton",
-    "version": "v1.1",
+    "description": "Symfony api-skeleton",
+    "version": "v1.3",
     "type": "project",
     "license": "MIT",
     "minimum-stability": "stable",
