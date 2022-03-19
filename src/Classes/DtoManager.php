@@ -42,11 +42,7 @@ class DtoManager
                 if (isset($params[$field])) {
                     if (is_scalar($params[$field])) {
                         $value = trim($params[$field]);
-                        if ((bool) strtotime($value)) {
-                            $dto->$methodName(new DateTime($value));
-                        } else {
-                            $dto->$methodName($value);
-                        }
+                        $dto->$methodName((bool) strtotime($value) ? new DateTime($value) : $value);
                     } elseif (is_array($params[$field])) {
                         $type = null;
                         $reader = new AnnotationReader();
