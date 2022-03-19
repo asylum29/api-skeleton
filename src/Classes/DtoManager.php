@@ -51,7 +51,7 @@ class DtoManager
                         $type = null;
                         $reader = new AnnotationReader();
 
-                        /** @var DtoParamArrayType $annotation */
+                        /** @var DtoParamType $annotation */
                         $annotation = $reader->getMethodAnnotation($method, DtoParamType::class);
                         if (!empty($annotation)) {
                             $type = $annotation->type;
