@@ -8,7 +8,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Annotation
  * @Target({"METHOD"})
  */
-class DtoParamType
+class ParamArrayType
 {
     public $type;
 }

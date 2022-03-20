@@ -50,9 +50,9 @@ abstract class BaseController extends AbstractController
         throw new ApiException($message, $statusCode);
     }
 
-    protected function validate($dto, array $groups = null)
+    protected function validate($obj, array $groups = null)
     {
-        $errors = $this->validator->validate($dto, null, $groups);
+        $errors = $this->validator->validate($obj, null, $groups);
         if (count($errors) > 0) {
             $message = [];
             /** @var ConstraintViolation $error */

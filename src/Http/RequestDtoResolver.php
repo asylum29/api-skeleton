@@ -3,7 +3,7 @@
 namespace App\Http;
 
 use App\Annotation\Dto;
-use App\Classes\DtoManager;
+use App\Classes\PropertyFiller;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Generator;
 use ReflectionClass;
@@ -32,7 +32,7 @@ class RequestDtoResolver implements ArgumentValueResolverInterface
 
     public function resolve(Request $request, ArgumentMetadata $argument): Generator
     {
-        yield DtoManager::fill($argument->getType(), array_merge(
+        yield PropertyFiller::fill($argument->getType(), array_merge(
             $request->request->all(),
             $request->query->all(),
             $request->attributes->all()

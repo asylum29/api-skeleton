@@ -2,17 +2,17 @@
 
 namespace App\Classes;
 
-use App\Annotation\DtoParamArrayType;
-use App\Annotation\DtoParamType;
+use App\Annotation\ParamArrayType;
+use App\Annotation\ParamType;
 use DateTime;
 use Doctrine\Common\Annotations\AnnotationReader;
 use ReflectionClass;
 use ReflectionException;
 
-class DtoManager
+class PropertyFiller
 {
     /**
-     * Заполняет объект Dto полями из массива.
+     * Заполняет объект полями из массива.
      *
      * @param string $class
      * @param array $fields
@@ -23,7 +23,7 @@ class DtoManager
      */
     public static function fill(string $class, array $fields)
     {
-        $dto = new $class();
+        $obj = new $class();
 
         $params = [];
         foreach ($fields as $key => $value) {
@@ -42,24 +42,24 @@ class DtoManager
                 if (isset($params[$field])) {
                     if (is_scalar($params[$field])) {
                         $value = trim($params[$field]);
-                        $dto->$methodName((bool) strtotime($value) ? new DateTime($value) : $value);
+                        $obj->$methodName((bool) strtotime($value) ? new DateTime($value) : $value);
                     } elseif (is_array($params[$field])) {
                         $type = null;
                         $reader = new AnnotationReader();
 
-                        /** @var DtoParamType $annotation */
-                        $annotation = $reader->getMethodAnnotation($method, DtoParamType::class);
+                        /** @var ParamType $annotation */
+                        $annotation = $reader->getMethodAnnotation($method, ParamType::class);
                         if (!empty($annotation)) {
                             $type = $annotation->type;
                         }
                         if (!empty($type)) {
                             $object = self::fill($type, $params[$field]);
-                            $dto->$methodName($object);
+                            $obj->$methodName($object);
                             continue;
                         }
 
-                        /** @var DtoParamArrayType $annotation */
-                        $annotation = $reader->getMethodAnnotation($method, DtoParamArrayType::class);
+                        /** @var ParamArrayType $annotation */
+                        $annotation = $reader->getMethodAnnotation($method, ParamArrayType::class);
                         if (!empty($annotation)) {
                             $type = $annotation->type;
                         }
@@ -68,16 +68,16 @@ class DtoManager
                             foreach ($params[$field] as $element) {
                                 $array[] = self::fill($type, $element);
                             }
-                            $dto->$methodName($array);
+                            $obj->$methodName($array);
                             continue;
                         }
 
-                        $dto->$methodName($params[$field]);
+                        $obj->$methodName($params[$field]);
                     }
                 }
             }
         }
 
-        return $dto;
+        return $obj;
     }
 }
