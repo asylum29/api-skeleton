@@ -1,7 +1,7 @@
 # Symfony api-skeleton
 Шаблон API для Symfony.
 ## Особенности
-- класс *DtoManager* для заполнения полей DTO-объектов из массива
+- класс *PropertyFiller* для заполнения полей объектов из массива
 - автоматический парсинг входящего http-запроса в DTO-объект в параметре действия контроллера
 - контроллер *BaseController* с методами *success()* и *error()* с поддержкой сериализации и методом *validate()* для валидации
 - сквозная обработка ошибок для http-запросов
@@ -61,22 +61,22 @@ public function index(): Response
     ...
 }
 ```
-### Заполнение DTO полями массива
+### Заполнение полей объекта из массива
 ```php
-// в классе DTO
-class СustomDto
+// в классе
+class СustomClass
 {
     ...
-    /** @DtoParamType(type=OtherDto::class) */
-    public function setField(OtherDto $value): self
+    /** @ParamType(type=OtherClass::class) */
+    public function setField(OtherClass $value): self
 
-    /** @DtoParamArrayType(type=OtherDto::class) */
+    /** @ParamArrayType(type=OtherClass::class) */
     public function setArrayField(array $values): self
     ...
 }
 
 // в коде
-$dtoObject = DtoManager::fill(СustomDto::class, $arrayOfFields)
+$obj = PropertyFiller::create(СustomClass::class, $arrayOfFields)
 ```
 ### DTO в контроллере с заполнением из Request
 ```php
