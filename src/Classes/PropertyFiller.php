@@ -12,7 +12,7 @@ use ReflectionException;
 class PropertyFiller
 {
     /**
-     * Заполняет объект полями из массива.
+     * Создает объект и заполняет его поля значениями из массива.
      *
      * @param string $class
      * @param array $fields
@@ -21,7 +21,7 @@ class PropertyFiller
      *
      * @throws ReflectionException
      */
-    public static function fill(string $class, array $fields)
+    public static function create(string $class, array $fields)
     {
         $obj = new $class();
 
@@ -53,7 +53,7 @@ class PropertyFiller
                             $type = $annotation->type;
                         }
                         if (!empty($type)) {
-                            $object = self::fill($type, $params[$field]);
+                            $object = self::create($type, $params[$field]);
                             $obj->$methodName($object);
                             continue;
                         }
@@ -66,7 +66,7 @@ class PropertyFiller
                         if (!empty($type)) {
                             $array = [];
                             foreach ($params[$field] as $element) {
-                                $array[] = self::fill($type, $element);
+                                $array[] = self::create($type, $element);
                             }
                             $obj->$methodName($array);
                             continue;

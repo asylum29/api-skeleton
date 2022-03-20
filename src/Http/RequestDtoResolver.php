@@ -32,7 +32,7 @@ class RequestDtoResolver implements ArgumentValueResolverInterface
 
     public function resolve(Request $request, ArgumentMetadata $argument): Generator
     {
-        yield PropertyFiller::fill($argument->getType(), array_merge(
+        yield PropertyFiller::create($argument->getType(), array_merge(
             $request->request->all(),
             $request->query->all(),
             $request->attributes->all()
