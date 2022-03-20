@@ -24,6 +24,7 @@ final class MakeRest extends AbstractMaker
 {
     private $doctrineHelper;
     private $controllerClassName;
+    private $crudClassName;
     private $inflector;
 
     public function __construct(DoctrineHelper $doctrineHelper)
@@ -70,8 +71,8 @@ final class MakeRest extends AbstractMaker
         );
         $entityDoctrineDetails = $this->doctrineHelper->createDoctrineDetails($entityClassDetails->getFullName());
         $entityMetadata = $this->doctrineHelper->getMetadata($entityClassDetails->getFullName());
-        $entity_methods = $entityMetadata->getReflectionClass()->getMethods();
-        $entity_setters = array_filter($entity_methods, function ($method) {
+        $entityMethods = $entityMetadata->getReflectionClass()->getMethods();
+        $entitySetters = array_filter($entityMethods, function ($method) {
             return 0 === strpos($method->getName(), 'set');
         });
         $entityIdentifierPattern = '.+';
@@ -93,10 +94,32 @@ final class MakeRest extends AbstractMaker
         $entityVarSingular = lcfirst($this->singularize($entityClassDetails->getShortName()));
         $routeName = Str::asRouteName($controllerClassDetails->getRelativeNameWithoutSuffix());
 
+        $crudClassDetails = $generator->createClassNameDetails(
+            '\\App\\Service\\'.$this->crudClassName,
+            'Service\\',
+            'Service'
+        );
+
+        $generator->generateClass(
+            $crudClassDetails->getFullName(),
+            'skeleton/CrudManager',
+            [
+                'entity_full_class_name' => $entityClassDetails->getFullName(),
+                'entity_class_name' => $entityClassDetails->getShortName(),
+                'entity_var_singular' => $entityVarSingular,
+                'entity_identifier' => $entityDoctrineDetails->getIdentifier(),
+                'entity_setters' => $entitySetters,
+                'repository_full_class_name' => $repositoryClassDetails->getFullName(),
+                'repository_class_name' => $repositoryClassDetails->getShortName(),
+            ]
+        );
+
         $generator->generateController(
             $controllerClassDetails->getFullName(),
             'skeleton/RestController',
             [
+                'crud_full_class_name' => $crudClassDetails->getFullName(),
+                'crud_class_name' => $crudClassDetails->getShortName(),
                 'entity_full_class_name' => $entityClassDetails->getFullName(),
                 'entity_class_name' => $entityClassDetails->getShortName(),
                 'route_path' => Str::asRoutePath($controllerClassDetails->getRelativeNameWithoutSuffix()),
@@ -105,7 +128,7 @@ final class MakeRest extends AbstractMaker
                 'entity_var_singular' => $entityVarSingular,
                 'entity_identifier' => $entityDoctrineDetails->getIdentifier(),
                 'entity_identifier_pattern' => $entityIdentifierPattern,
-                'entity_setters' => $entity_setters,
+                'entity_setters' => $entitySetters,
                 'repository_full_class_name' => $repositoryClassDetails->getFullName(),
                 'repository_class_name' => $repositoryClassDetails->getShortName(),
             ]
@@ -141,6 +164,16 @@ final class MakeRest extends AbstractMaker
         $this->controllerClassName = $io->ask(
             sprintf('Choose a name for your controller class (e.g. <fg=yellow>%s</>)', $defaultControllerClass),
             $defaultControllerClass
+        );
+
+        $defaultCrudClass = Str::asClassName(sprintf(
+            '%s Manager',
+            $input->getArgument('entity-class')
+        ));
+
+        $this->crudClassName = $io->ask(
+            sprintf('Choose a name for your CRUD class for entity (e.g. <fg=yellow>%s</>)', $defaultCrudClass),
+            $defaultCrudClass
         );
     }
 

@@ -3,11 +3,8 @@
 namespace <?= $namespace ?>;
 
 use <?= $entity_full_class_name ?>;
-use <?= $repository_full_class_name ?>;
+use <?= $crud_full_class_name ?>;
 use App\Exception\ApiException;
-use DateTime;
-use DateTimeImmutable;
-use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,11 +14,11 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class <?= $class_name ?> extends BaseController<?= "\n" ?>
 {
-    private $managerRegistry;
+    private $crudManager;
 
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(<?= $crud_class_name ?> $crudManager)
     {
-        $this->managerRegistry = $managerRegistry;
+        $this->crudManager = $crudManager;
     }
 
     /**
@@ -37,22 +34,14 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
      */
     public function search(Request $request): Response
     {
-        /** @var <?= $repository_class_name ?> $repository */
-        $repository = $this->managerRegistry->getRepository(<?= $entity_class_name ?>::class);
         $params = $request->query->all();
         unset($params['page']);
         unset($params['perPage']);
         unset($params['sort']);
+        $sort = (array) $request->query->get('sort', []);
         $page = $request->query->getInt('page', 1);
-        $count = $repository->count([]);
-        $perPage = $request->query->getInt('perPage', $count);
-        $sort = json_decode($request->query->get('sort'), true);
-        $<?= $entity_var_plural ?> = $repository->findBy(
-            $params,
-            $sort,
-            $perPage,
-            $perPage * ($page - 1)
-        );
+        $perPage = $request->query->getInt('perPage');
+        list($<?= $entity_var_plural ?>, $count) = $this->crudManager->search($params, $sort, $page, $perPage);
 
         return $this->success(
             $<?= $entity_var_plural ?>,
@@ -77,44 +66,24 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
      */
     public function create(Request $request): Response
     {
-        $em = $this->managerRegistry->getManager();
-        $<?= $entity_var_singular ?> = new <?= $entity_class_name ?>();
+        $<?= $entity_var_singular ?> = $this->crudManager->create(
 <?php
-        $t = '    ';
-        $br = "\n";
-        echo $br;
-        foreach ($entity_setters as $setter) {
-            $param = $setter->getParameters()[0];
-            $is_simple = strpos($param->getType()->getName(), '\\') === false;
-            if ($is_simple) {
-                if (strpos($param->getType()->getName(), 'DateTime') !== false) {
-                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '(' . $br.$t.$t.$t
-                        . 'DateTimeImmutable::createFromMutable(' . $br.$t.$t.$t.$t
-                        . 'new DateTime(' . '$request->request->get(\'' . $param->getName() . '\'))' . $br.$t.$t.$t
-                        . ')' . $br.$t.$t
-                        . ');' . $br;
-                } else {
-                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                        . '($request->request->get(\'' . $param->getName() . '\'));' . $br;
+            $t = '    ';
+            $br = "\n";
+            $count = count($entity_setters);
+            $counter = 0;
+            foreach ($entity_setters as $setter) {
+                $param = $setter->getParameters()[0];
+                echo $t.$t.$t . '$request->request->get(\'' . $param->getName() . '\')';
+                if (++$counter !== $count) {
+                    echo ',';
                 }
-            } else {
-                echo $t.$t . '/** @var \\' . $param->getType()->getName() . ' $temp */' . $br.$t.$t
-                    . '$temp = $this->managerRegistry' . $br.$t.$t.$t
-                    . '->getRepository(\''
-                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t
-                    . '->find('
-                    . '$request->request->get(\'' . $param->getName() . '\')'
-                    . ')' . $br.$t.$t . ';' . $br;
-                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '($temp);' . $br;
+                echo $br;
             }
-        }
 ?>
-        $em->persist($<?= $entity_var_singular ?>);
-        $em->flush();
+        );
 
-        $response = $this
-            ->success($<?= $entity_var_singular ?>, ['group' => 'create'])
-            ->setStatusCode(Response::HTTP_CREATED);
+        $response = $this->success($<?= $entity_var_singular ?>);
         $response->headers->set(
             'Location',
             $this->generateUrl(
@@ -141,10 +110,10 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
      *
      * @throws ApiException
      */
-    public function read($<?= $entity_identifier ?>): Response
+    public function view($<?= $entity_identifier ?>): Response
     {
         /** @var <?= $entity_class_name ?> $<?= $entity_var_singular ?> */
-        $<?= $entity_var_singular ?> = $this->managerRegistry->getRepository(<?= $entity_class_name ?>::class)->find($<?= $entity_identifier?>);
+        $<?= $entity_var_singular ?> = $this->crudManager->view($<?= $entity_identifier?>);
         if (empty($<?= $entity_var_singular ?>)) {
             $this->error('Not found', Response::HTTP_NOT_FOUND);
         }
@@ -168,64 +137,38 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
      */
     public function update(Request $request, $<?= $entity_identifier ?>): Response
     {
-        $em = $this->managerRegistry->getManager();
-        /** @var <?= $entity_class_name ?> $<?= $entity_var_singular ?> */
-        $<?= $entity_var_singular ?> = $this->managerRegistry->getRepository(<?= $entity_class_name ?>::class)->find($<?= $entity_identifier?>);
-        $isCreated = false;
-        if (empty($<?= $entity_var_singular ?>)) {
-            $<?= $entity_var_singular ?> = new <?= $entity_class_name ?>();
-            $isCreated = true;
-        }
+        $<?= $entity_var_singular ?> = $this->crudManager->update(
 <?php
-        $t = '    ';
-        $br = "\n";
-        echo $br;
-        foreach ($entity_setters as $setter) {
-            $param = $setter->getParameters()[0];
-            $is_simple = strpos($param->getType()->getName(), '\\') === false;
-            if ($is_simple) {
-                if (strpos($param->getType()->getName(), 'DateTime') !== false) {
-                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '(' . $br.$t.$t.$t
-                        . 'DateTimeImmutable::createFromMutable(' . $br.$t.$t.$t.$t
-                        . 'new DateTime(' . '$request->request->get(\'' . $param->getName() . '\'))' . $br.$t.$t.$t
-                        . ')' . $br.$t.$t
-                        . ');' . $br;
-                } else {
-                    echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                        . '($request->request->get(\'' . $param->getName() . '\'));' . $br;
-                }
-            } else {
-                echo $t.$t . '/** @var \\' . $param->getType()->getName() . ' $temp */' . $br.$t.$t
-                    . '$temp = $this->managerRegistry' . $br.$t.$t.$t
-                    . '->getRepository(\''
-                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t
-                    . '->find('
-                    . '$request->request->get(\'' . $param->getName() . '\')'
-                    . ')' . $br.$t.$t . ';' . $br;
-                echo $t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '($temp);' . $br;
+            $t = '    ';
+            $br = "\n";
+            $count = count($entity_setters);
+            $counter = 0;
+            echo $t.$t.$t.'$' . $entity_identifier;
+            if ($count > 0) {
+                echo ',';
             }
-        }
+            echo $br;
+            foreach ($entity_setters as $setter) {
+                $param = $setter->getParameters()[0];
+                echo $t.$t.$t . '$request->request->get(\'' . $param->getName() . '\')';
+                if (++$counter !== $count) {
+                    echo ',';
+                }
+                echo $br;
+            }
 ?>
-        if ($isCreated) {
-            $em->persist($<?= $entity_var_singular ?>);
-            $em->flush();
-            $response = $this
-                ->success($<?= $entity_var_singular ?>, ['group' => 'create'])
-                ->setStatusCode(Response::HTTP_CREATED);
-            $response->headers->set(
-                'Location',
-                $this->generateUrl(
-                    '<?= $route_name ?>_get',
-                    ['<?= $entity_identifier?>' => $<?= $entity_var_singular ?>->get<?= ucfirst($entity_identifier) ?>()]
-                )
-            );
+        );
 
-            return $response;
-        } else {
-            $em->flush();
+        $response = $this->success($<?= $entity_var_singular ?>);
+        $response->headers->set(
+            'Location',
+            $this->generateUrl(
+                '<?= $route_name ?>_get',
+                ['<?= $entity_identifier?>' => $<?= $entity_var_singular ?>->get<?= ucfirst($entity_identifier) ?>()]
+            )
+        );
 
-            return $this->success();
-        }
+        return $response;
     }
 
     /**
@@ -246,49 +189,57 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
      */
     public function patch(Request $request, $<?= $entity_identifier ?>): Response
     {
-        $em = $this->managerRegistry->getManager();
-        /** @var <?= $entity_class_name ?> $<?= $entity_var_singular ?> */
-        $<?= $entity_var_singular ?> = $this->managerRegistry->getRepository(<?= $entity_class_name ?>::class)->find($<?= $entity_identifier?>);
-        if (empty($<?= $entity_var_singular ?>)) {
-            $this->error('Not found', Response::HTTP_NOT_FOUND);
-        }
-
 <?php
         $t = '    ';
         $br = "\n";
+        $count = count($entity_setters);
+        $counter = 0;
         foreach ($entity_setters as $setter) {
             $param = $setter->getParameters()[0];
-            $is_simple = strpos($param->getType()->getName(), '\\') === false;
+            echo $t.$t . '$' . $param->getName() . ' = false;' . $br;
             echo $t.$t . 'if ($request->request->has(\''
                 . $param->getName() . '\')) {' . $br;
-            if ($is_simple) {
-                if (strpos($param->getType()->getName(), 'DateTime') !== false) {
-                    echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '(' . $br.$t.$t.$t.$t
-                        . 'DateTimeImmutable::createFromMutable(' . $br.$t.$t.$t.$t.$t
-                        . 'new DateTime(' . '$request->request->get(\'' . $param->getName() . '\'))' . $br.$t.$t.$t.$t
-                        . ')' . $br.$t.$t.$t
-                        . ');' . $br;
-                } else {
-                    echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName()
-                        . '($request->request->get(\'' . $param->getName() . '\'));' . $br;
-                }
-            } else {
-                echo $t.$t.$t . '/** @var \\' . $param->getType()->getName() . ' $temp */' . $br.$t.$t.$t
-                    . '$temp = $this->managerRegistry' . $br.$t.$t.$t.$t
-                    . '->getRepository(\''
-                    . $param->getType()->getName() . '\')' . $br.$t.$t.$t.$t
-                    . '->find('
-                    . '$request->request->get(\'' . $param->getName() . '\')'
-                    . ')' . $br.$t.$t.$t . ';' . $br;
-                echo $t.$t.$t . '$' . $entity_var_singular . '->' . $setter->getName() . '($temp);' . $br;
-            }
+            echo $t.$t.$t . '$' . $param->getName() . ' = '
+                . '$request->request->get(\'' . $param->getName() . '\');' . $br;
             echo $t.$t . '}' . $br;
         }
 ?>
 
-        $em->flush();
+        $<?= $entity_var_singular ?> = $this->crudManager->patch(
+<?php
+            $t = '    ';
+            $br = "\n";
+            $count = count($entity_setters);
+            $counter = 0;
+            echo $t.$t.$t.'$' . $entity_identifier;
+            if ($count > 0) {
+                echo ',';
+            }
+            echo $br;
+            foreach ($entity_setters as $setter) {
+                $param = $setter->getParameters()[0];
+                echo $t.$t.$t . '$' . $param->getName();
+                if (++$counter !== $count) {
+                    echo ',';
+                }
+                echo $br;
+            }
+?>
+        );
+        if (empty($<?= $entity_var_singular ?>)) {
+            $this->error('Not found', Response::HTTP_NOT_FOUND);
+        }
 
-        return $this->success();
+        $response = $this->success($<?= $entity_var_singular ?>);
+        $response->headers->set(
+            'Location',
+            $this->generateUrl(
+                '<?= $route_name ?>_get',
+                ['<?= $entity_identifier?>' => $<?= $entity_var_singular ?>->get<?= ucfirst($entity_identifier) ?>()]
+            )
+        );
+
+        return $response;
     }
 
     /**
@@ -308,15 +259,10 @@ class <?= $class_name ?> extends BaseController<?= "\n" ?>
      */
     public function delete($<?= $entity_identifier?>): Response
     {
-        $em = $this->managerRegistry->getManager();
-        /** @var <?= $entity_class_name ?> $<?= $entity_var_singular ?> */
-        $<?= $entity_var_singular ?> = $this->managerRegistry->getRepository(<?= $entity_class_name ?>::class)->find($<?= $entity_identifier?>);
-        if (empty($<?= $entity_var_singular ?>)) {
+        $deleted = $this->crudManager->delete($<?= $entity_identifier?>);
+        if (!$deleted) {
             $this->error('Not found', Response::HTTP_NOT_FOUND);
         }
-
-        $em->remove($<?= $entity_var_singular ?>);
-        $em->flush();
 
         return $this->success();
     }
