@@ -234,7 +234,7 @@ class <?= $class_name ?><?= "\n" ?>
     public function delete($<?= $entity_identifier?>): bool
     {
         /** @var <?= $entity_class_name ?> $<?= $entity_var_singular ?> */
-        $<?= $entity_var_singular ?> = $this->managerRegistry->getRepository(<?= $entity_class_name ?>::class)->find($<?= $entity_identifier?>);
+        $<?= $entity_var_singular ?> = $this->managerRegistry->getRepository(<?= $entity_class_name ?>::class)->find($<?= $entity_identifier ?> ?? 0);
         if (empty($<?= $entity_var_singular ?>)) {
             return false;
         }
