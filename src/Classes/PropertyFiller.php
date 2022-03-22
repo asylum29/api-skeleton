@@ -42,7 +42,10 @@ class PropertyFiller
                 if (isset($params[$field])) {
                     if (is_scalar($params[$field])) {
                         $value = trim($params[$field]);
-                        $obj->$methodName((bool) strtotime($value) ? new DateTime($value) : $value);
+                        $obj->$methodName(
+                            (bool) strtotime($value) && !is_numeric($value) ?
+                                new DateTime($value) : $value
+                        );
                     } elseif (is_array($params[$field])) {
                         $type = null;
                         $reader = new AnnotationReader();
