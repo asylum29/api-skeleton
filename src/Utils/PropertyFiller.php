@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Classes;
+namespace App\Utils;
 
 use App\Annotation\ParamArrayType;
 use App\Annotation\ParamType;

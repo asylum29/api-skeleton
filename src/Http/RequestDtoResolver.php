@@ -3,7 +3,7 @@
 namespace App\Http;
 
 use App\Annotation\Dto;
-use App\Classes\PropertyFiller;
+use App\Utils\PropertyFiller;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Generator;
 use ReflectionClass;
