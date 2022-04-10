@@ -35,19 +35,19 @@ class ApiEncoder implements EncoderInterface, DecoderInterface
             }
         } else {
             $result['success'] = false;
-            if (!empty($context['error_message'])) {
+            if (isset($context['error_message'])) {
                 $result['message'] = $context['error_message'];
             }
-            if (!empty($context['error_code'])) {
+            if (isset($context['error_code'])) {
                 $result['code'] = $context['error_code'];
             }
-            if (!empty($context['error_traceback'])) {
+            if (isset($context['error_traceback'])) {
                 $result['traceback'] = $context['error_traceback'];
             }
-            if (!empty($context['error_file'])) {
+            if (isset($context['error_file'])) {
                 $result['file'] = $context['error_file'];
             }
-            if (!empty($context['error_line'])) {
+            if (isset($context['error_line'])) {
                 $result['line'] = $context['error_line'];
             }
         }
