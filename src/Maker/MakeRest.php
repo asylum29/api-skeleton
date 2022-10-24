@@ -45,7 +45,7 @@ final class MakeRest extends AbstractMaker
         return 'Creates rest CRUD for Doctrine entity class';
     }
 
-    public function configureCommand(Command $command, InputConfiguration $inputConfig)
+    public function configureCommand(Command $command, InputConfiguration $inputConfig): void
     {
         $command
             ->addArgument(
@@ -60,7 +60,7 @@ final class MakeRest extends AbstractMaker
         $inputConfig->setArgumentAsNonInteractive('entity-class');
     }
 
-    public function generate(InputInterface $input, ConsoleStyle $io, Generator $generator)
+    public function generate(InputInterface $input, ConsoleStyle $io, Generator $generator): void
     {
         $entityClassDetails = $generator->createClassNameDetails(
             Validator::entityExists(
@@ -72,11 +72,11 @@ final class MakeRest extends AbstractMaker
         $entityDoctrineDetails = $this->doctrineHelper->createDoctrineDetails($entityClassDetails->getFullName());
         $entityMetadata = $this->doctrineHelper->getMetadata($entityClassDetails->getFullName());
         $entityMethods = $entityMetadata->getReflectionClass()->getMethods();
-        $entitySetters = array_filter($entityMethods, function ($method) {
+        $entitySetters = array_filter($entityMethods, static function ($method) {
             return 0 === strpos($method->getName(), 'set');
         });
         $entityIdentifierPattern = '.+';
-        if ('integer' == $entityMetadata->getTypeOfField($entityDoctrineDetails->getIdentifier())) {
+        if ('integer' === $entityMetadata->getTypeOfField($entityDoctrineDetails->getIdentifier())) {
             $entityIdentifierPattern = "\d+";
         }
 

@@ -32,52 +32,101 @@ class PropertyFiller
             $params[$newKey] = $value;
         }
 
+        $reader = new AnnotationReader();
         $reflection = new ReflectionClass($class);
+
         $methods = $reflection->getMethods();
         foreach ($methods as $method) {
             $methodName = $method->getName();
-            if ('set' == mb_substr($methodName, 0, 3)) {
-                $field = mb_substr($methodName, 3);
-                $field = mb_strtolower(mb_substr($field, 0, 1)).mb_substr($field, 1);
-                if (isset($params[$field])) {
-                    if (is_scalar($params[$field])) {
-                        $value = trim($params[$field]);
-                        $obj->$methodName(
-                            (bool) strtotime($value) && !is_numeric($value) ?
-                                new DateTime($value) : $value
-                        );
-                    } elseif (is_array($params[$field])) {
-                        $type = null;
-                        $reader = new AnnotationReader();
+            if (0 !== mb_strpos($methodName, 'set')) {
+                continue;
+            }
 
-                        /** @var ParamType $annotation */
-                        $annotation = $reader->getMethodAnnotation($method, ParamType::class);
-                        if (!empty($annotation)) {
-                            $type = $annotation->type;
-                        }
-                        if (!empty($type)) {
-                            $object = self::create($type, $params[$field]);
-                            $obj->$methodName($object);
-                            continue;
-                        }
+            $field = mb_substr($methodName, 3);
+            $field = mb_strtolower(mb_substr($field, 0, 1)).mb_substr($field, 1);
+            if (!isset($params[$field])) {
+                continue;
+            }
 
-                        /** @var ParamArrayType $annotation */
-                        $annotation = $reader->getMethodAnnotation($method, ParamArrayType::class);
-                        if (!empty($annotation)) {
-                            $type = $annotation->type;
-                        }
-                        if (!empty($type)) {
-                            $array = [];
-                            foreach ($params[$field] as $element) {
-                                $array[] = self::create($type, $element);
-                            }
-                            $obj->$methodName($array);
-                            continue;
-                        }
+            if (is_scalar($params[$field])) {
+                $value = trim($params[$field]);
+                $obj->$methodName(
+                    strtotime($value) && !is_numeric($value) ? new DateTime($value) : $value
+                );
+                unset($params[$field]);
+            } elseif (is_array($params[$field])) {
+                $type = null;
 
-                        $obj->$methodName($params[$field]);
-                    }
+                /** @var ParamType $annotation */
+                $annotation = $reader->getMethodAnnotation($method, ParamType::class);
+                if (null !== $annotation) {
+                    $type = $annotation->type;
                 }
+                if (!empty($type)) {
+                    $object = self::create($type, $params[$field]);
+                    $obj->$methodName($object);
+                    unset($params[$field]);
+                    continue;
+                }
+
+                /** @var ParamArrayType $annotation */
+                $annotation = $reader->getMethodAnnotation($method, ParamArrayType::class);
+                if (null !== $annotation) {
+                    $type = $annotation->type;
+                }
+                if (!empty($type)) {
+                    $array = [];
+                    foreach ($params[$field] as $element) {
+                        $array[] = self::create($type, $element);
+                    }
+                    $obj->$methodName($array);
+                    unset($params[$field]);
+                    continue;
+                }
+
+                $obj->$methodName($params[$field]);
+            }
+        }
+
+        $properties = $reflection->getProperties();
+        foreach ($properties as $property) {
+            $field = $property->getName();
+            if (!isset($params[$field])) {
+                continue;
+            }
+
+            if (is_scalar($params[$field])) {
+                $value = trim($params[$field]);
+                $obj->$field = strtotime($value) && !is_numeric($value) ? new DateTime($value) : $value;
+            } elseif (is_array($params[$field])) {
+                $type = null;
+
+                /** @var ParamType $annotation */
+                $annotation = $reader->getPropertyAnnotation($property, ParamType::class);
+                if (null !== $annotation) {
+                    $type = $annotation->type;
+                }
+                if (!empty($type)) {
+                    $object = self::create($type, $params[$field]);
+                    $obj->$field = $object;
+                    continue;
+                }
+
+                /** @var ParamArrayType $annotation */
+                $annotation = $reader->getPropertyAnnotation($property, ParamArrayType::class);
+                if (null !== $annotation) {
+                    $type = $annotation->type;
+                }
+                if (!empty($type)) {
+                    $array = [];
+                    foreach ($params[$field] as $element) {
+                        $array[] = self::create($type, $element);
+                    }
+                    $obj->$field = $array;
+                    continue;
+                }
+
+                $obj->$field = $params[$field];
             }
         }
 

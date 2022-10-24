@@ -6,6 +6,7 @@ use App\Exception\ApiException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -23,7 +24,7 @@ class ApiEventSubscriber implements EventSubscriberInterface
         $this->prod = 'prod' === $container->getParameter('kernel.environment');
     }
 
-    public function onKernelException(ExceptionEvent $event)
+    public function onKernelException(ExceptionEvent $event): void
     {
         $throwable = $event->getThrowable();
         $meta = [
@@ -46,7 +47,7 @@ class ApiEventSubscriber implements EventSubscriberInterface
         if ($throwable instanceof ApiException) {
             $response->setStatusCode($throwable->getStatusCode());
         } else {
-            $response->setStatusCode(JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            $response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         $event->setResponse($response);

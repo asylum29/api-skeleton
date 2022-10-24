@@ -9,12 +9,12 @@ class ApiEncoder implements EncoderInterface, DecoderInterface
 {
     public function decode(string $data, string $format, array $context = [])
     {
-        return json_decode($data);
+        return json_decode($data, false);
     }
 
     public function supportsDecoding(string $format): bool
     {
-        return 'api' == $format;
+        return 'api' === $format;
     }
 
     public function encode($data, string $format, array $context = []): string
@@ -57,6 +57,6 @@ class ApiEncoder implements EncoderInterface, DecoderInterface
 
     public function supportsEncoding(string $format): bool
     {
-        return 'api' == $format;
+        return 'api' === $format;
     }
 }
