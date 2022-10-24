@@ -68,6 +68,9 @@ class СustomClass
 {
     ...
     /** @ParamType(type=OtherClass::class) */
+    public $field;
+    
+    /** @ParamType(type=OtherClass::class) */
     public function setField(OtherClass $value): self
 
     /** @ParamArrayType(type=OtherClass::class) */
