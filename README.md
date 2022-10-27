@@ -5,7 +5,7 @@
 - автоматический парсинг входящего http-запроса в DTO-объект в параметре действия контроллера
 - контроллер *BaseController* с методами *success()* и *error()* с поддержкой сериализации и методом *validate()* для валидации
 - сквозная обработка ошибок для http-запросов
-- генерация документации с использованием (NelmioApiDocBundle)[https://symfony.com/bundles/NelmioApiDocBundle/current/index.html]
+- генерация документации с использованием [NelmioApiDocBundle](https://symfony.com/bundles/NelmioApiDocBundle/current/index.html)
 - префикс *api* для всех роут
 ## Создание нового проекта
 ```
