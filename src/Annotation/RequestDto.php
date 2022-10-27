@@ -8,6 +8,6 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Annotation
  * @Target({"CLASS"})
  */
-class Dto
+class RequestDto
 {
 }

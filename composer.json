@@ -1,7 +1,7 @@
 {
     "name": "asylum29/api-skeleton",
     "description": "Symfony api-skeleton",
-    "version": "v1.7",
+    "version": "v1.8",
     "type": "project",
     "license": "MIT",
     "minimum-stability": "stable",
@@ -15,6 +15,7 @@
         "doctrine/doctrine-bundle": "^2.5",
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.11",
+        "nelmio/api-doc-bundle": "^4.10",
         "sensio/framework-extra-bundle": "^6.2",
         "symfony/console": "5.4.*",
         "symfony/dotenv": "5.4.*",

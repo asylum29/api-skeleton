@@ -5,6 +5,8 @@
 - автоматический парсинг входящего http-запроса в DTO-объект в параметре действия контроллера
 - контроллер *BaseController* с методами *success()* и *error()* с поддержкой сериализации и методом *validate()* для валидации
 - сквозная обработка ошибок для http-запросов
+- генерация документации с использованием (NelmioApiDocBundle)[https://symfony.com/bundles/NelmioApiDocBundle/current/index.html]
+- префикс *api* для всех роут
 ## Создание нового проекта
 ```
 composer create-project asylum29/api-skeleton <project_name>
@@ -84,7 +86,7 @@ $obj = PropertyFiller::create(СustomClass::class, $arrayOfFields)
 ### DTO в контроллере с заполнением из Request
 ```php
 // в классе DTO
-/** @Dto */
+/** @RequestDto */
 class СustomDto
 
 // в контроллере
@@ -100,3 +102,5 @@ $this->validate($object, $groups)
 ```
 php bin/console make:rest
 ```
+### API-документация
+Перейдите по ссылке */docs/*

@@ -2,7 +2,7 @@
 
 namespace App\Http;
 
-use App\Annotation\Dto;
+use App\Annotation\RequestDto;
 use App\Utils\PropertyFiller;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Generator;
@@ -27,7 +27,7 @@ class RequestDtoResolver implements ArgumentValueResolverInterface
             return get_class($annotation);
         }, $annotations);
 
-        return in_array(Dto::class, $annotations, true);
+        return in_array(RequestDto::class, $annotations, true);
     }
 
     public function resolve(Request $request, ArgumentMetadata $argument): Generator
