@@ -3,16 +3,23 @@
 namespace App\Http;
 
 use App\Annotation\RequestDto;
-use App\Utils\PropertyFiller;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Generator;
 use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class RequestDtoResolver implements ArgumentValueResolverInterface
 {
+    private $serializer;
+
+    public function __construct(SerializerInterface $serializer)
+    {
+        $this->serializer = $serializer;
+    }
+
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
         $class = $argument->getType();
@@ -36,12 +43,13 @@ class RequestDtoResolver implements ArgumentValueResolverInterface
         if (!empty($content = $request->getContent())) {
             $contentData = json_decode($content, true);
         }
-
-        yield PropertyFiller::create($argument->getType(), array_merge(
+        $data = json_encode(array_merge(
             $request->request->all(),
             $request->query->all(),
             $request->attributes->all(),
             $contentData
         ));
+
+        yield $this->serializer->deserialize($data, $argument->getType(), 'json');
     }
 }

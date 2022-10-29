@@ -1,7 +1,6 @@
 # Symfony api-skeleton
 Шаблон API для Symfony.
 ## Особенности
-- класс *PropertyFiller* для заполнения полей объектов из массива
 - автоматический парсинг входящего http-запроса в DTO-объект в параметре действия контроллера
 - контроллер *BaseController* с методами *success()* и *error()* с поддержкой сериализации и методом *validate()* для валидации
 - сквозная обработка ошибок для http-запросов
@@ -62,26 +61,6 @@ public function index(): Response
     }
     ...
 }
-```
-### Заполнение полей объекта из массива
-```php
-// в классе
-class СustomClass
-{
-    ...
-    /** @ParamType(type=OtherClass::class) */
-    public $field;
-    
-    /** @ParamType(type=OtherClass::class) */
-    public function setField(OtherClass $value): self
-
-    /** @ParamArrayType(type=OtherClass::class) */
-    public function setArrayField(array $values): self
-    ...
-}
-
-// в коде
-$obj = PropertyFiller::create(СustomClass::class, $arrayOfFields)
 ```
 ### DTO в контроллере с заполнением из Request
 ```php
